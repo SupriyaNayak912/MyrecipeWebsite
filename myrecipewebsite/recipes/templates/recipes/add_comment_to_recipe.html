@@ -1,0 +1,13 @@
+{% extends 'recipes/base.html' %}
+{% load static %}
+{% block title %}Add Comment{% endblock %}
+
+{% block content %}
+<h1>Add Comment to {{ recipe.title }}</h1>
+<form method="POST" class="mt-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Add Comment</button>
+</form>
+<a href="{% static url 'recipe_detail' recipe.pk %}" class="btn btn-secondary mt-3">Cancel</a>
+{% endblock %}

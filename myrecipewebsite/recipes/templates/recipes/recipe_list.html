@@ -1,0 +1,27 @@
+{% extends 'recipes/base.html' %}
+{% load static %}
+
+{% block title %}Recipe List{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Recipes</h1>
+<form method="GET" action="{% url 'search_recipes' %}" class="form-inline mb-4">
+    <input type="text" name="q" placeholder="Search for recipes..." class="form-control mr-2">
+    <button type="submit" class="btn btn-custom">Search</button>
+</form>
+<div class="row">
+    {% for recipe in recipes %}
+    <div class="col-md-4">
+        <div class="card recipe-card">
+            <img src="{% static 'recipes/images/placeholder.jpg' %}" class="card-img-top" alt="{{ recipe.title }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ recipe.title }}</h5>
+                <p class="card-text">{{ recipe.description|truncatewords:20 }}</p>
+                <a href="{% url 'recipe_detail' recipe.pk %}" class="btn btn-custom">View Recipe</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<a href="{% url 'recipe_create' %}" class="btn btn-success mt-4">Add a new recipe</a>
+{% endblock %}

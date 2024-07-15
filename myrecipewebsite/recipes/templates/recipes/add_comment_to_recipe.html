@@ -8,6 +8,7 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">Add Comment</button>
+    <button type="button" class="btn btn-primary" onclick="window.location.href='{% url 'home' %}'">Cancel</button>
 </form>
-<a href="{% static url 'recipe_detail' recipe.pk %}" class="btn btn-secondary mt-3">Cancel</a>
+
 {% endblock %}

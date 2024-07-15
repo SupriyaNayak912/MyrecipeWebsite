@@ -1,4 +1,4 @@
-{% extends 'recipes/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Recipe{% endblock %}
 
@@ -7,7 +7,10 @@
 <form method="POST" class="mt-4">
     {% csrf_token %}
     {{ form.as_p }}
+
     <button type="submit" class="btn btn-success">Save</button>
+    
 </form>
+
 <a href="{% url 'recipe_list' %}" class="btn btn-secondary mt-3">Cancel</a>
 {% endblock %}

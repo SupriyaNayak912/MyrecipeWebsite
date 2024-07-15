@@ -6,23 +6,123 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.core.mail import send_mail
 from django.conf import settings
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model, authenticate
+from django.conf import settings
+from .forms import CustomUserCreationForm
+from django.core.files.storage import FileSystemStorage
+from .forms import UploadFileForm
+from django.contrib.auth.decorators import login_required
+from .models import Recipe, SavedRecipe
+from django.contrib import messages
+from django.http import JsonResponse
+
+def save_recipe(request, recipe_id):
+    recipe = Recipe.objects.get(pk=recipe_id)
+    saved_recipe, created = SavedRecipe.objects.get_or_create(user=request.user, recipe=recipe)
+    if created:
+        messages.success(request, 'Recipe saved successfully!')
+    else:
+        messages.info(request, 'Recipe is already saved.')
+
+    return redirect('recipe_list')
+
+@login_required
+def saved_recipes(request):
+    saved_recipes = SavedRecipe.objects.filter(user=request.user)
+    return render(request, 'recipes/saved_recipes.html', {'saved_recipes': saved_recipes})
+
+@login_required
+def profile_view(request):
+    user = request.user
+    recipes = Recipe.objects.filter(author=user)
+    return render(request, 'recipes/profile.html', {'user': user, 'recipes': recipes})
+
+
+def recipe_create_view(request):
+    if request.method == 'POST':
+        form = RecipeForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('recipe_list')  # Redirect after successful form submission
+    else:
+        form = RecipeForm()
+
+    context = {
+        'form': form,
+    }
+    return render(request, 'recipe_form.html', context)
+
+def upload_file(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = request.FILES['file']
+            # Save the file using default storage (FileSystemStorage)
+            fs = FileSystemStorage()
+            filename = fs.save(uploaded_file.name, uploaded_file)
+            return render(request, 'upload_success.html', {'filename': filename})
+    else:
+        form = UploadFileForm()
+    return render(request, 'upload.html', {'form': form})
+
+
+@login_required
+def add_recipe(request):
+    if request.method == 'POST':
+        form = RecipeForm(request.POST, request.FILES)
+        if form.is_valid():
+            recipe = form.save(commit=False)
+            recipe.author = request.user  # Assign the current user as the author
+            recipe.save()
+            messages.success(request,'Recipe created successfully')
+            return redirect('recipe_list')
+    else:
+        form = RecipeForm()
+    return render(request, 'recipes/add_recipe.html', {'form': form})
+
+def home(request):
+    return render(request, 'recipes/home.html')
+
 
 def signup(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            send_mail(
-                'Welcome to My Site',
-                'Thank you for signing up.',
-                settings.EMAIL_HOST_USER,
-                [user.email],
-                fail_silently=False,
-            )
-            return redirect('recipe_list')
+            user = form.save(commit=False)
+            user.email = form.cleaned_data.get('email')
+            user.save()
+
+            # Specify the backend explicitly
+            backend = 'django.contrib.auth.backends.ModelBackend'
+            user = authenticate(username=form.cleaned_data.get('username'), password=form.cleaned_data.get('password1'), backend=backend)
+            
+            if user is not None:
+                login(request, user, backend=backend)
+                return redirect('recipe_list')
     else:
-        form = UserCreationForm()
-    return render(request, 'signup.html', {'form': form})
+        form = CustomUserCreationForm()
+    return render(request, 'recipes/signup.html', {'form': form})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('recipe_list')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'recipes/login.html', {'form': form})
+
 
 def recipe_list(request):
     recipes = Recipe.objects.all()
@@ -36,16 +136,16 @@ def recipe_detail(request, pk):
 
 @login_required
 def recipe_create(request):
-    if request.method == "POST":
-        form =RecipeForm(request.POST)
+    if request.method == 'POST':
+        form = RecipeForm(request.POST, request.FILES)
         if form.is_valid():
             recipe = form.save(commit=False)
-            recipe.author = request.user
+            recipe.author = request.user  # Assign the current user as the author
             recipe.save()
-            return redirect('recipe_detail', pk=recipe.pk)
+            return redirect('recipe_list')
     else:
         form = RecipeForm()
-    return render(request, 'recipes/recipe_form.html', {'form': form})
+    return render(request, 'recipes/recipe_new.html', {'form': form})
 
 @login_required
 def recipe_edit(request, pk):
@@ -103,4 +203,19 @@ def search_recipes(request):
     query = request.GET.get('q')
     recipes = Recipe.objects.filter(title__icontains=query) | Recipe.objects.filter(description__icontains=query)
     return render(request, 'recipes/recipe_list.html', {'recipes': recipes, 'query': query})
+
+def about_us(request):
+    return render(request, 'recipes/about_us.html')
+
+def contact_us(request):
+    return render(request, 'recipes/contact_us.html')
+
+def privacy_policy(request):
+    return render(request, 'recipes/privacy_policy.html')
+
+
+
+
+
+
 

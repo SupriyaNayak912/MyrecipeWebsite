@@ -8,6 +8,9 @@
     <img src="{% static 'recipes/images/placeholder.jpg' %}" class="card-img-top recipe-detail-img" alt="{{ recipe.title }}">
     <div class="card-body">
         <h1 class="card-title">{{ recipe.title }}</h1>
+        {% if recipe.image %}
+            <img src="{{ recipe.image.url }}" class="img-fluid" alt="{{ recipe.title }}">
+        {% endif %}
         <p class="card-text">{{ recipe.description }}</p>
         <h2>Ingredients</h2>
         <p>{{ recipe.ingredients }}</p>
@@ -28,7 +31,7 @@
         <strong>{{ comment.author }}</strong>: {{ comment.content }}
     </div>
     {% endfor %}
-    <a href="{% url 'add_comment_to_recipe' recipe.pk %}" class="btn btn-custom mt-3">Add a comment</a>
+    <a href="{% url 'add_comment_to_recipe' recipe.pk %}" class="btn btn-primary">Add a comment</a>
 </div>
 
 <h2>Ratings</h2>
@@ -38,6 +41,9 @@
         <strong>{{ rating.user }}</strong>: {{ rating.rating }}
     </div>
     {% endfor %}
-    <a href="{% url 'add_rating_to_recipe' recipe.pk %}" class="btn btn-custom mt-3">Add a rating</a>
+    <a href="{% url 'add_rating_to_recipe' recipe.pk %}" class="btn btn-primary">Add a rating</a>
 </div>
+
+
+
 {% endblock %}
